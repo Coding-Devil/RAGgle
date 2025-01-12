@@ -279,7 +279,7 @@ if st.button("Send 🚀", use_container_width=True):
                     "content": response
                 })
                 
-                st.experimental_rerun()
+                st.rerun()
                 
         except Exception as e:
             st.error(f"Error: {str(e)}")
