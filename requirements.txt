@@ -1,0 +1,6 @@
+streamlit
+Pillow
+python-dotenv
+PyMuPDF
+huggingface-hub
+torch 
