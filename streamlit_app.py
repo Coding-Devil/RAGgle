@@ -26,7 +26,7 @@ def get_chatbot():
 st.set_page_config(
     page_title="RAGgle AI by Gokul",
     page_icon="🔥",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
