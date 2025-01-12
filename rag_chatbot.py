@@ -1,3 +1,8 @@
+try:
+    import torch
+except ImportError:
+    print("PyTorch import failed, attempting to continue without it...")
+
 from huggingface_hub import InferenceClient
 import torch
 from PIL import Image
@@ -20,8 +25,8 @@ class VisionChatbot:
         if not self.api_token:
             raise ValueError("HUGGING_FACE_TOKEN not found in environment variables")
         
-        # Initialize inference client
-        self.client = InferenceClient(api_key=self.api_token)
+        # Initialize inference client with correct parameter name 'token'
+        self.client = InferenceClient(token=self.api_token)
         
         # Maximum context length for the model
         self.max_chunk_size = 2000
