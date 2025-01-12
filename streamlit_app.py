@@ -18,7 +18,9 @@ def get_chatbot():
     if not hf_token:
         st.error("Hugging Face API token not found!")
         st.stop()
-    return VisionChatbot(api_token=hf_token)
+    
+    # Remove the api_token parameter since the class gets it from environment variables
+    return VisionChatbot()
 
 # Page configuration
 st.set_page_config(
@@ -98,8 +100,92 @@ st.markdown("""
         height: auto !important;
         min-height: 0 !important;
     }
+
+    /* Chat UI Styles */
+    .message {
+        display: flex;
+        align-items: flex-start;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 12px;
+        max-width: 90%;
+    }
+
+    .user-message {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        margin-left: auto;
+    }
+
+    .assistant-message {
+        background: rgba(17, 19, 26, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-right: auto;
+    }
+
+    .avatar {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        min-width: 30px;
+    }
+
+    .message-content {
+        color: #E2E8F0;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .user-message .message-content {
+        color: #93C5FD;
+    }
+
+    /* Chat container */
+    .chat-container {
+        padding: 2rem;
+        border-radius: 12px;
+        background: rgba(17, 19, 26, 0.6);
+        margin: 1rem 0;
+        max-height: 600px;
+        overflow-y: auto;
+    }
     </style>
     """, unsafe_allow_html=True)
+
+def create_message_bubble(text, is_user=False):
+    if is_user:
+        return f"""
+            <div style="
+                padding: 1rem;
+                margin: 0.5rem 0;
+                border-radius: 0.5rem;
+                background: rgba(59, 130, 246, 0.1);
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                margin-left: auto;
+                max-width: 80%;
+                display: flex;
+                gap: 0.5rem;
+            ">
+                <div>👤</div>
+                <div style="color: #93C5FD;">{text}</div>
+            </div>
+        """
+    else:
+        return f"""
+            <div style="
+                padding: 1rem;
+                margin: 0.5rem 0;
+                border-radius: 0.5rem;
+                background: rgba(17, 19, 26, 0.8);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                margin-right: auto;
+                max-width: 80%;
+                display: flex;
+                gap: 0.5rem;
+            ">
+                <div>🤖</div>
+                <div style="color: #E2E8F0;">{text}</div>
+            </div>
+        """
 
 # Initialize chatbot
 chatbot = get_chatbot()
@@ -115,7 +201,7 @@ st.markdown("---")
 col1, col2 = st.columns([5,1])
 with col2:
     if st.button("🗑️ Clear", key="clear_chat"):
-        st.session_state.chat_history = []
+        st.session_state.messages = []
         st.experimental_rerun()
 
 # File upload section
@@ -140,14 +226,18 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat interface
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
 
-# Chat history display
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-for chat in st.session_state.chat_history:
-    st.markdown(f'<div class="user-query">🧑 {chat["query"]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="assistant-response">🤖 {chat["response"]}</div>', unsafe_allow_html=True)
+for message in st.session_state.messages:
+    st.markdown(
+        create_message_bubble(
+            message["content"],
+            is_user=message["role"] == "user"
+        ),
+        unsafe_allow_html=True
+    )
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Query input
@@ -160,6 +250,12 @@ query = st.text_input(
 if st.button("Send 🚀", use_container_width=True):
     if query:
         try:
+            # Add user message
+            st.session_state.messages.append({
+                "role": "user",
+                "content": query
+            })
+            
             with st.spinner('Processing...'):
                 if uploaded_file:
                     # Handle file-based query
@@ -177,10 +273,12 @@ if st.button("Send 🚀", use_container_width=True):
                     # Handle text-only query
                     response = chatbot.generate_response(text_prompt=query)
                 
-                st.session_state.chat_history.append({
-                    "query": query,
-                    "response": response
+                # Add assistant response
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": response
                 })
+                
                 st.experimental_rerun()
                 
         except Exception as e:
