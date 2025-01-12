@@ -202,7 +202,7 @@ col1, col2 = st.columns([5,1])
 with col2:
     if st.button("🗑️ Clear", key="clear_chat"):
         st.session_state.messages = []
-        st.experimental_rerun()
+        st.rerun()
 
 # File upload section
 with st.container():
