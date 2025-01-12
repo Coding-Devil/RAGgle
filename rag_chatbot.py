@@ -1,10 +1,4 @@
-try:
-    import torch
-except ImportError:
-    print("PyTorch import failed, attempting to continue without it...")
-
 from huggingface_hub import InferenceClient
-import torch
 from PIL import Image
 import base64
 from io import BytesIO
